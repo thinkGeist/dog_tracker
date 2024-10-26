@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Card, Title, Button, IconButton } from 'react-native-paper';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { getFirestore, collection, doc, updateDoc, onSnapshot } from 'firebase/firestore';
 
 
 
@@ -46,11 +46,16 @@ export default function App() {
   // This is where we can fetch data, update the UI, etc.
   // We will use it to fetch the dogs data from Firebase
   useEffect(() => {
-    const fetchDogs = async () => {
-      const snapshot = await getDocs(collection(db, 'dogs'));
+    const fetchDogs = () => {
+      const dogsRef = collection(db, 'dogs');
+      const unsubscribe = onSnapshot(dogsRef, (snapshot) => {
       const dogsData = snapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name, location: doc.data().location }));
       setDogs(dogsData);
       setView(new Array(dogsData.length).fill(false));
+      });
+  
+      // Cleanup subscription on unmount
+      return () => unsubscribe();
     };
 
     fetchDogs();
